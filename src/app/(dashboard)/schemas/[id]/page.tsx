@@ -25,6 +25,12 @@ import {
   IconSearch,
   IconList,
   IconLayoutGrid,
+  IconStar,
+  IconStarFilled,
+  IconEye,
+  IconTrendingUp,
+  IconShield,
+  IconZap,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,8 +54,21 @@ const mockSchema = {
   createdAt: "2024-01-15T10:30:00Z",
   updatedAt: "2024-01-20T14:15:00Z",
   status: "completed",
+  isFavorite: false,
   get tableCount() {
     return this.tables.length;
+  },
+  get relationCount() {
+    return this.tables.reduce(
+      (sum, table) =>
+        sum +
+        table.columns.filter((col) =>
+          col.constraints.some((constraint) =>
+            constraint.startsWith("FK:")
+          )
+        ).length,
+      0
+    );
   },
   tables: [
     {
@@ -318,6 +337,12 @@ const priorityColors = {
   low: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300",
 };
 
+const suggestionTypeIcons = {
+  performance: IconZap,
+  normalization: IconDatabase,
+  security: IconShield,
+};
+
 interface SchemaDetailPageProps {
   params: { id: string };
 }
@@ -328,6 +353,7 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
   const [tableSearch, setTableSearch] = useState("");
   const [viewMode, setViewMode] = useState<"compact" | "detailed">("compact");
+  const [isFavorite, setIsFavorite] = useState(mockSchema.isFavorite);
 
   // In real app, fetch schema by ID from Supabase
   // const schema = await getSchemaById(params.id)
@@ -360,6 +386,11 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
     }
   };
 
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    // TODO: Update in database
+  };
+
   const StatusIcon =
     statusConfig[schema.status as keyof typeof statusConfig].icon;
 
@@ -390,9 +421,9 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
   );
 
   return (
-    <div className="flex flex-col gap-3 p-3 sm:gap-4 sm:p-4 max-w-full overflow-hidden">
+    <div className="flex flex-col gap-6 p-6 max-w-full overflow-hidden">
       {/* Header */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <Button variant="ghost" size="sm" asChild className="w-fit">
           <Link href="/schemas">
             <IconArrowLeft className="h-4 w-4 mr-2" />
@@ -400,39 +431,53 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
           </Link>
         </Button>
 
-        <div className="space-y-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3 flex-1">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-4 flex-1">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
                   {schema.name}
                 </h1>
-                <Badge
-                  variant="outline"
-                  className={
-                    statusConfig[schema.status as keyof typeof statusConfig]
-                      .color
-                  }
-                >
-                  <StatusIcon
-                    className={`w-3 h-3 mr-1 ${
-                      schema.status === "processing" ? "animate-spin" : ""
-                    }`}
-                  />
-                  {
-                    statusConfig[schema.status as keyof typeof statusConfig]
-                      .label
-                  }
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={
+                      statusConfig[schema.status as keyof typeof statusConfig]
+                        .color
+                    }
+                  >
+                    <StatusIcon
+                      className={`w-3 h-3 mr-1 ${
+                        schema.status === "processing" ? "animate-spin" : ""
+                      }`}
+                    />
+                    {
+                      statusConfig[schema.status as keyof typeof statusConfig]
+                        .label
+                    }
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleFavorite}
+                    className="p-1 h-auto"
+                  >
+                    {isFavorite ? (
+                      <IconStarFilled className="h-4 w-4 text-yellow-500" />
+                    ) : (
+                      <IconStar className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
 
-              <p className="text-muted-foreground text-sm sm:text-base">
+              <p className="text-muted-foreground text-lg leading-relaxed">
                 {schema.description}
               </p>
 
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-2">
                 {schema.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
+                  <Badge key={tag} variant="secondary" className="text-sm px-3 py-1">
                     {tag}
                   </Badge>
                 ))}
@@ -440,7 +485,7 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
             </div>
 
             {/* Actions - Desktop */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-3">
               <Button variant="outline" size="sm">
                 <IconShare className="h-4 w-4 mr-2" />
                 Share
@@ -545,70 +590,71 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-        <Card className="border-0 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/25">
-          <CardContent className="p-3">
+      {/* Enhanced Quick Stats */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Card className="border-0 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/25 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-blue-700 dark:text-blue-300">Tables</p>
-                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{schema.tableCount}</p>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Tables</p>
+                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{schema.tableCount}</p>
               </div>
-              <div className="p-2 bg-blue-200/50 dark:bg-blue-800/30 rounded-lg">
-                <IconTable className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 bg-blue-200/50 dark:bg-blue-800/30 rounded-xl">
+                <IconTable className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/50 dark:to-purple-900/25">
-          <CardContent className="p-3">
+        <Card className="border-0 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/50 dark:to-purple-900/25 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-purple-700 dark:text-purple-300">Relations</p>
-                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-                  {schema.tables.reduce(
-                    (sum, table) =>
-                      sum +
-                      table.columns.filter((col) =>
-                        col.constraints.some((constraint) =>
-                          constraint.startsWith("FK:")
-                        )
-                      ).length,
-                    0
-                  )}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Relations</p>
+                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                  {schema.relationCount}
                 </p>
               </div>
-              <div className="p-2 bg-purple-200/50 dark:bg-purple-800/30 rounded-lg">
-                <IconRelationOneToMany className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <div className="p-3 bg-purple-200/50 dark:bg-purple-800/30 rounded-xl">
+                <IconRelationOneToMany className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/50 dark:to-green-900/25">
-          <CardContent className="p-3">
+        <Card className="border-0 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/50 dark:to-green-900/25 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-green-700 dark:text-green-300">Created</p>
-                <p className="text-sm font-semibold text-green-900 dark:text-green-100">{formatDate(schema.createdAt).split(",")[0]}</p>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-green-700 dark:text-green-300">Created</p>
+                <p className="text-sm font-semibold text-green-900 dark:text-green-100">
+                  {formatDate(schema.createdAt).split(",")[0]}
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  {formatDate(schema.createdAt).split(",")[1]}
+                </p>
               </div>
-              <div className="p-2 bg-green-200/50 dark:bg-green-800/30 rounded-lg">
-                <IconCalendar className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <div className="p-3 bg-green-200/50 dark:bg-green-800/30 rounded-xl">
+                <IconCalendar className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/50 dark:to-orange-900/25">
-          <CardContent className="p-3">
+        <Card className="border-0 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/50 dark:to-orange-900/25 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-orange-700 dark:text-orange-300">Updated</p>
-                <p className="text-sm font-semibold text-orange-900 dark:text-orange-100">{formatDate(schema.updatedAt).split(",")[0]}</p>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Updated</p>
+                <p className="text-sm font-semibold text-orange-900 dark:text-orange-100">
+                  {formatDate(schema.updatedAt).split(",")[0]}
+                </p>
+                <p className="text-xs text-orange-600 dark:text-orange-400">
+                  {formatDate(schema.updatedAt).split(",")[1]}
+                </p>
               </div>
-              <div className="p-2 bg-orange-200/50 dark:bg-orange-800/30 rounded-lg">
-                <IconClock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              <div className="p-3 bg-orange-200/50 dark:bg-orange-800/30 rounded-xl">
+                <IconClock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </CardContent>
@@ -616,50 +662,50 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
       </div>
 
       {/* Main Content Tabs */}
-      <Card className="border-0 shadow-sm bg-white/50 dark:bg-gray-950/50 backdrop-blur-sm">
-        <CardHeader className="pb-3">
+      <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm">
+        <CardHeader className="pb-4">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-4 h-auto bg-gray-100/70 dark:bg-gray-800/70 p-1 rounded-lg">
+            <TabsList className="grid w-full grid-cols-4 h-12 bg-gray-100/70 dark:bg-gray-800/70 p-1 rounded-xl">
               <TabsTrigger
                 value="blueprint"
-                className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 text-sm px-4 py-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-200 rounded-lg"
               >
-                <IconDatabase className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline sm:inline">Blueprint</span>
-                <span className="xs:hidden sm:hidden">BP</span>
+                <IconDatabase className="h-4 w-4" />
+                <span className="hidden sm:inline">Blueprint</span>
+                <span className="sm:hidden">BP</span>
               </TabsTrigger>
               <TabsTrigger
                 value="sql"
-                className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 text-sm px-4 py-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-200 rounded-lg"
               >
-                <IconCode className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline sm:inline">Raw SQL</span>
-                <span className="xs:hidden sm:hidden">SQL</span>
+                <IconCode className="h-4 w-4" />
+                <span className="hidden sm:inline">Raw SQL</span>
+                <span className="sm:hidden">SQL</span>
               </TabsTrigger>
               <TabsTrigger
                 value="erd"
-                className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 text-sm px-4 py-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-200 rounded-lg"
               >
-                <IconRelationOneToMany className="h-3 w-3 sm:h-4 sm:w-4" />
+                <IconRelationOneToMany className="h-4 w-4" />
                 ERD
               </TabsTrigger>
               <TabsTrigger
                 value="suggestions"
-                className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 text-sm px-4 py-3 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-200 rounded-lg"
               >
-                <IconBulb className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline sm:inline">Suggestions</span>
-                <span className="xs:hidden sm:hidden">Tips</span>
+                <IconBulb className="h-4 w-4" />
+                <span className="hidden sm:inline">Suggestions</span>
+                <span className="sm:hidden">Tips</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
 
-        <CardContent className="p-3 sm:p-4">
+        <CardContent className="p-6">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
@@ -668,13 +714,13 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
             {/* Blueprint Tab */}
             <TabsContent
               value="blueprint"
-              className="space-y-3 sm:space-y-4 mt-3 sm:mt-4"
+              className="space-y-6 mt-6"
             >
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* Header with controls */}
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <h3 className="text-lg font-semibold">Database Blueprint</h3>
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <h3 className="text-xl font-semibold">Database Blueprint</h3>
+                  <div className="flex items-center gap-3 overflow-x-auto pb-1">
                     <Button
                       variant="outline"
                       size="sm"
@@ -709,7 +755,7 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
                 </div>
 
                 {/* Search and expand/collapse controls */}
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
                   <div className="relative flex-1 lg:max-w-md">
                     <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
@@ -717,10 +763,10 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
                       placeholder="Search tables..."
                       value={tableSearch}
                       onChange={(e) => setTableSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 text-sm border rounded-md bg-background min-w-0"
+                      className="w-full pl-10 pr-4 py-3 text-sm border rounded-lg bg-background min-w-0 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -748,7 +794,7 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
               </div>
 
               {/* Tables list */}
-              <div className="space-y-2 sm:space-y-3">
+              <div className="space-y-4">
                 {filteredTables.map((table) => {
                   const isExpanded = expandedTables.has(table.name);
                   const foreignKeys = table.columns.filter((col) =>
@@ -758,31 +804,31 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
                   );
 
                   return (
-                    <Card key={table.name} className="overflow-hidden border-0 shadow-sm bg-gradient-to-r from-gray-50/50 to-gray-100/30 dark:from-gray-900/50 dark:to-gray-800/30 hover:shadow-md transition-all duration-200">
+                    <Card key={table.name} className="overflow-hidden border shadow-sm bg-gradient-to-r from-gray-50/50 to-gray-100/30 dark:from-gray-900/50 dark:to-gray-800/30 hover:shadow-lg transition-all duration-300">
                       <CardHeader
-                        className="pb-2 cursor-pointer hover:bg-gradient-to-r hover:from-gray-100/60 hover:to-gray-200/40 dark:hover:from-gray-800/60 dark:hover:to-gray-700/40 transition-all duration-200"
+                        className="pb-3 cursor-pointer hover:bg-gradient-to-r hover:from-gray-100/60 hover:to-gray-200/40 dark:hover:from-gray-800/60 dark:hover:to-gray-700/40 transition-all duration-200"
                         onClick={() => toggleTableExpansion(table.name)}
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
                             {isExpanded ? (
-                              <IconChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <IconChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                             ) : (
-                              <IconChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <IconChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                             )}
-                            <div className="p-1.5 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 rounded-md">
-                              <IconTable className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 rounded-xl">
+                              <IconTable className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <CardTitle className="text-sm sm:text-base truncate font-semibold">
+                              <CardTitle className="text-lg truncate font-semibold">
                                 {table.name}
                               </CardTitle>
-                              <p className="text-xs text-muted-foreground truncate">
+                              <p className="text-sm text-muted-foreground truncate mt-1">
                                 {table.description}
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             <Badge
                               variant="secondary"
                               className="text-xs whitespace-nowrap bg-gray-200/60 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 border-0"
@@ -808,13 +854,13 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
                             <table className="w-full">
                               <thead>
                                 <tr className="border-b bg-muted/50">
-                                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">
+                                  <th className="text-left py-4 px-6 font-medium text-muted-foreground text-sm">
                                     COLUMN
                                   </th>
-                                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">
+                                  <th className="text-left py-4 px-6 font-medium text-muted-foreground text-sm">
                                     TYPE
                                   </th>
-                                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-sm">
+                                  <th className="text-left py-4 px-6 font-medium text-muted-foreground text-sm">
                                     CONSTRAINTS
                                   </th>
                                 </tr>
@@ -829,14 +875,14 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
                                         : ""
                                     }
                                   >
-                                    <td className="py-3 px-4 font-mono text-sm font-medium">
+                                    <td className="py-4 px-6 font-mono text-sm font-medium">
                                       {column.name}
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-muted-foreground">
+                                    <td className="py-4 px-6 text-sm text-muted-foreground">
                                       {column.type}
                                     </td>
-                                    <td className="py-3 px-4">
-                                      <div className="flex flex-wrap gap-1">
+                                    <td className="py-4 px-6">
+                                      <div className="flex flex-wrap gap-2">
                                         {column.constraints.map(
                                           (constraint, constraintIndex) => {
                                             let badgeClass = "text-xs";
@@ -882,13 +928,13 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
                             {table.columns.map((column, index) => (
                               <div
                                 key={column.name}
-                                className={`p-4 ${
+                                className={`p-6 ${
                                   index !== table.columns.length - 1
                                     ? "border-b"
                                     : ""
                                 }`}
                               >
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                   <div className="font-mono text-sm font-medium">
                                     {column.name}
                                   </div>
@@ -896,7 +942,7 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
                                     {column.type}
                                   </div>
                                   {column.constraints.length > 0 && (
-                                    <div className="flex flex-wrap gap-1">
+                                    <div className="flex flex-wrap gap-2">
                                       {column.constraints.map(
                                         (constraint, constraintIndex) => {
                                           let badgeClass = "text-xs";
@@ -942,8 +988,8 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
 
               {filteredTables.length === 0 && (
                 <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <IconSearch className="h-12 w-12 text-muted-foreground mb-4" />
+                  <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                    <IconSearch className="h-16 w-16 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium mb-2">
                       No tables found
                     </h3>
@@ -956,9 +1002,9 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
             </TabsContent>
 
             {/* SQL Tab */}
-            <TabsContent value="sql" className="space-y-3 mt-3 sm:mt-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <h3 className="text-lg font-semibold">Generated SQL Schema</h3>
+            <TabsContent value="sql" className="space-y-6 mt-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <h3 className="text-xl font-semibold">Generated SQL Schema</h3>
                 <Button
                   variant="outline"
                   size="sm"
@@ -977,7 +1023,7 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
 
               <Card>
                 <CardContent className="p-0">
-                  <pre className="bg-muted p-3 sm:p-4 rounded-lg overflow-x-auto text-xs sm:text-sm">
+                  <pre className="bg-muted p-6 rounded-lg overflow-x-auto text-sm leading-relaxed">
                     <code>{schema.sql}</code>
                   </pre>
                 </CardContent>
@@ -985,9 +1031,9 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
             </TabsContent>
 
             {/* ERD Tab */}
-            <TabsContent value="erd" className="space-y-4 mt-4 sm:mt-6">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <h3 className="text-lg font-semibold">
+            <TabsContent value="erd" className="space-y-6 mt-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <h3 className="text-xl font-semibold">
                   Entity Relationship Diagram
                 </h3>
                 <Button variant="outline" size="sm" className="w-fit whitespace-nowrap">
@@ -998,11 +1044,11 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
               </div>
 
               <Card>
-                <CardContent className="p-4 sm:p-8">
-                  <div className="flex items-center justify-center h-64 sm:h-96 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                <CardContent className="p-8 sm:p-12">
+                  <div className="flex items-center justify-center h-80 sm:h-96 border-2 border-dashed border-muted-foreground/25 rounded-xl">
                     <div className="text-center px-4">
-                      <IconDatabase className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-4" />
-                      <h4 className="text-base sm:text-lg font-medium mb-2">
+                      <IconDatabase className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground mx-auto mb-6" />
+                      <h4 className="text-lg sm:text-xl font-medium mb-3">
                         Interactive ERD
                       </h4>
                       <p className="text-sm text-muted-foreground">
@@ -1015,50 +1061,61 @@ export default function SchemaDetailPage({ params }: SchemaDetailPageProps) {
             </TabsContent>
 
             {/* Suggestions Tab */}
-            <TabsContent value="suggestions" className="space-y-4 mt-4 sm:mt-6">
-              <div className="space-y-4">
-                {schema.suggestions.map((suggestion, index) => (
-                  <Card key={index}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <CardTitle className="text-base">
-                            {suggestion.title}
-                          </CardTitle>
-                          <p className="text-sm text-muted-foreground">
-                            {suggestion.description}
-                          </p>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className={
-                            priorityColors[
-                              suggestion.priority as keyof typeof priorityColors
-                            ]
-                          }
-                        >
-                          {suggestion.priority} priority
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          Affects tables:
-                        </span>
-                        {suggestion.tables.map((table) => (
+            <TabsContent value="suggestions" className="space-y-6 mt-6">
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold">AI Recommendations</h3>
+                
+                {schema.suggestions.map((suggestion, index) => {
+                  const SuggestionIcon = suggestionTypeIcons[suggestion.type as keyof typeof suggestionTypeIcons] || IconBulb;
+                  
+                  return (
+                    <Card key={index} className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 rounded-xl">
+                              <SuggestionIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="space-y-2 flex-1">
+                              <CardTitle className="text-lg">
+                                {suggestion.title}
+                              </CardTitle>
+                              <p className="text-sm text-muted-foreground leading-relaxed">
+                                {suggestion.description}
+                              </p>
+                            </div>
+                          </div>
                           <Badge
-                            key={table}
-                            variant="secondary"
-                            className="text-xs"
+                            variant="outline"
+                            className={
+                              priorityColors[
+                                suggestion.priority as keyof typeof priorityColors
+                              ]
+                            }
                           >
-                            {table}
+                            {suggestion.priority} priority
                           </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            Affects tables:
+                          </span>
+                          {suggestion.tables.map((table) => (
+                            <Badge
+                              key={table}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {table}
+                            </Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </TabsContent>
           </Tabs>
