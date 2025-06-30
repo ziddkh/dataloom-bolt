@@ -1,0 +1,37 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Update this rule if user requested changes to the project requirement, etc.
+# App Flow Document: Dataloom
+
+## Onboarding and Sign-In/Sign-Up
+
+When a new user arrives at Dataloom, they land on a simple welcome page that offers options to sign in or create an account. If they choose to sign up, they are prompted to enter an email address and a password. After submitting these credentials, an email verification link is sent. The user clicks the link to verify their address and is automatically signed in once verification completes. If the user forgets their password, they can click a “Forgot Password” link on the login page, enter their email, and receive a reset link. That link leads them to a secure form to set a new password. Social or single-sign-on options are not included in this MVP, so all authentication flows rely on email and password only. Users can sign out by clicking the “Logout” button in the top-right of any page, which returns them to the login screen.
+
+## Main Dashboard or Home Page
+
+After logging in, the user sees the Project Dashboard as their home page. This dashboard displays a chronological list of past schema sessions, each showing the user-assigned name, relevant tags, the selected database platform, and the date of last modification. At the top of the page there is a prominent button labeled “New Schema” that starts a fresh session. The header contains the application logo, a search field for finding past projects by name or tag, and a user avatar for accessing account settings or signing out. On the left side is a collapsible navigation pane where the user can switch between the Dashboard, Settings, and Help sections. The central area shows the project history, and each entry can be clicked to reopen that schema session in the editor.
+
+## Detailed Feature Flows and Page Transitions
+
+When the user clicks “New Schema,” they are taken to the Prompt Input page. This page presents a text area where they can type a natural-language description of their desired data model, or they can choose to upload a raw SQL dump file instead. Below the text area, there are toggles to select the target output format—PostgreSQL, MySQL, Laravel migration, or Prisma schema. If the user wants advanced options, a hidden panel can be expanded to adjust normalization levels or cost-estimation detail. When ready, the user clicks “Generate Schema,” and the interface shows a progress indicator while the AI pipeline parses, normalizes, and cost-estimates the schema. During this time, brief tips about best practices appear to inform the user about decisions taking place.
+
+Once processing finishes, the interface transitions seamlessly into the Results Viewer. The top of the page displays the session name with an edit icon that allows renaming on the spot. Below this header is a tab bar with four tabs labeled Visual Blueprint, Raw SQL, ERD, and Suggestions. In the Visual Blueprint tab, the user sees a structured list of tables, fields, data types, and relationships. Switching to the Raw SQL tab reveals the fully optimized DDL script ready for execution. In the ERD tab, the user can interact with an entity-relationship diagram by dragging nodes or zooming in and out. The Suggestions tab lists normalization advice, cost-saving tips, and alerts for anti-patterns. Any manual edits made in one view are reflected instantly in the others so the user can seamlessly move between perspectives.
+
+From any of these tabs, the user can choose to export their schema. Clicking the export dropdown next to the session name reveals “Copy to Clipboard” and “Download File” options. Depending on the selected output format, the file will download as a `.sql` dump, a Laravel migration `.php` file, or a `.prisma` schema definition. After exporting, the session remains saved on the Project Dashboard with an updated timestamp.
+
+If the user wants to revisit or modify an existing session, they return to the Dashboard and click the desired project entry. That action loads the Results Viewer in the same four-tab layout, preserving any manual edits or renamed session names. When the user is finished, they can navigate back to the Dashboard or click “New Schema” to start again.
+
+## Settings and Account Management
+
+Accessing the account settings is done by clicking the user avatar in the header. On the Settings page, the user can update their personal information such as display name or email address, change their password, and configure notification preferences for system updates or new feature announcements. If in a future release billing is added, a Billing tab will appear here, but in the MVP payment options are not present. When the user saves changes on the Settings page, a confirmation message appears and they can click “Back to Dashboard” to return to their workspace.
+
+## Error States and Alternate Paths
+
+If the user submits invalid input on the Prompt Input page—for example, an empty prompt or a malformed SQL file—the Generate button remains disabled and a clear message appears explaining what needs correction. During generation, if network connectivity is lost or the AI service fails, an error banner appears at the top of the Results Viewer area, offering a retry button. In case the SQL parser cannot interpret an uploaded file, the user is shown the Raw SQL tab with the original dump and a message offering to regenerate the normalized schema or proceed manually. If the verification link expires before the user confirms their email, a “Resend Verification” button appears on the login screen. Error messages use simple language and always include a clear path forward so the user can recover and continue.
+
+## Conclusion and Overall App Journey
+
+A user’s journey begins with signing up using an email and password, verifying their account, and arriving at the Project Dashboard. From there, they create a new schema session by entering a prompt or uploading SQL, tune output platform options, and trigger the AI-powered generation process. They explore the results across four synchronized views, make edits as needed, and export the final schema in their chosen format. Each session is automatically saved in the dashboard for quick retrieval, allowing the user to iterate on past designs or start new ones. Throughout this flow, the user can manage their account details in Settings and easily recover from errors or lost passwords, making Dataloom a straightforward and reliable workspace for AI-driven database schema design.

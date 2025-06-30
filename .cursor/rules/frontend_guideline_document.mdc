@@ -1,0 +1,280 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Update this rule if user requested changes to the project requirement, etc.
+# Frontend Guideline Document for Dataloom
+
+This document outlines how we build and organize the Dataloom frontend. It uses clear technical language to explain our architecture, design patterns, and tooling choices. By following these guidelines, developers can understand our component system, AI integration patterns, and how to maintain scalable code for our database schema generation platform.
+
+## 1. Frontend Architecture
+
+### 1.1 Overview
+
+* **Framework**: Next.js 15.3.4 with React 19 drives our modern web application. We leverage server-side rendering, static generation, and client-side routing for optimal performance.
+* **Development Mode**: Turbopack for lightning-fast development builds and hot module replacement.
+* **TypeScript**: Full TypeScript implementation for type safety, better DX, and reduced runtime errors.
+* **AI Integration**: Frontend components that interface with our AI-powered schema generation pipeline, handling real-time generation feedback and results display.
+* **Export System**: Multi-format schema export (PostgreSQL, MySQL, Laravel migrations, Prisma) with one-click copy/download functionality.
+
+### 1.2 Scalability, Maintainability & Performance
+
+* **Component System**: Shadcn/ui + Radix UI primitives provide accessible, composable, and customizable components.
+* **Variant-Based Styling**: class-variance-authority (CVA) for type-safe, variant-driven component styling.
+* **Code Splitting**: Automatic route-based code splitting with Next.js dynamic imports for heavy components.
+* **Bundle Optimization**: Tree-shaking and modern bundle optimization with Next.js 15.
+* **Type Safety**: End-to-end TypeScript with Zod for runtime validation and API contract enforcement.
+
+## 2. Design Principles
+
+### 2.1 Developer Experience
+
+* **Clean Interface**: Intuitive four-tab layout (Blueprint, Raw SQL, ERD, Suggestions) for schema review and analysis.
+* **Real-time Feedback**: Progress indicators and streaming updates during AI schema generation.
+* **Professional UI**: Modern, clean design suitable for technical users and teams.
+
+### 2.2 Accessibility
+
+* **Radix UI Foundation**: Built-in accessibility features with proper ARIA attributes and keyboard navigation.
+* **Focus Management**: Logical tab order and focus indicators for form inputs and interactive elements.
+* **Color Contrast**: High contrast ratios for text readability and visual hierarchy.
+* **Screen Reader Support**: Semantic HTML and proper labeling for assistive technologies.
+
+### 2.3 Responsiveness
+
+* **Desktop-First**: Optimized for developer workstations (primary use case) with responsive scaling.
+* **Flexible Layouts**: CSS Grid and Flexbox for adaptable schema visualization and multi-panel layouts.
+* **Breakpoint Strategy**: Tailwind's responsive prefixes for device-specific optimizations.
+
+## 3. Styling and Theming
+
+### 3.1 Approach
+
+* **Tailwind CSS v4**: Latest Tailwind version with enhanced performance and CSS-in-JS compatibility.
+* **CSS Custom Properties**: CSS variables for theme consistency and runtime theme switching.
+* **Component Variants**: CVA for maintainable, type-safe component variations.
+* **Utility-First**: Tailwind utilities with component abstraction where needed.
+
+### 3.2 Theme System
+
+* **Dark/Light Mode**: next-themes for seamless theme switching with system preference detection.
+* **Design Tokens**: Consistent spacing, typography, and color scales across components.
+* **Brand Colors**: Professional palette suitable for developer tools and technical interfaces.
+
+### 3.3 Typography
+
+* **System Fonts**: Native font stack optimized for code readability and professional appearance.
+* **Hierarchy**: Clear typographic scale for headings, body text, and code snippets.
+* **Code Display**: Proper monospace fonts for SQL output and schema code blocks.
+
+## 4. Component Structure
+
+### 4.1 Folder Layout
+
+```
+/src
+  /components
+    /ui              # Base UI components (Button, Input, etc.)
+      Button.tsx
+      Input.tsx
+      Card.tsx
+    /magicui         # Enhanced UI components with animations
+      sparkles-text.tsx
+      warp-background.tsx
+    /pages           # Page-specific components
+      /dashboard
+        /components  # Dashboard-specific components
+        /data       # Static data and configurations
+  /app              # Next.js app router pages
+    /(dashboard)    # Route groups for layout organization
+    /layout.tsx     # Root layout
+    /page.tsx       # Landing page
+  /lib              # Utilities and configurations
+    utils.ts        # Common utility functions
+  /hooks            # Custom React hooks
+    use-mobile.ts   # Mobile detection hook
+```
+
+### 4.2 Component Patterns
+
+* **Compound Components**: Radix UI patterns for complex interactions (dropdowns, dialogs, tabs).
+* **Polymorphic Components**: Using `@radix-ui/react-slot` for flexible component composition.
+* **Variant System**: CVA for consistent, type-safe component variations.
+* **Controlled Components**: Form components with proper state management and validation.
+
+## 5. State Management
+
+### 5.1 State Strategy
+
+* **Local State** (`useState`): Component-specific state for forms, toggles, and UI interactions.
+* **Server State**: Next.js built-in data fetching for static and dynamic content.
+* **Form State**: Controlled components with Zod validation for schema generation inputs.
+* **Theme State**: next-themes for persistent theme preferences.
+
+### 5.2 Data Flow
+
+* **Props Down**: Data flows down through component props with TypeScript interfaces.
+* **Events Up**: User interactions bubble up through callback props.
+* **Schema Results**: AI-generated schemas flow through the four-tab result viewer system.
+
+## 6. Routing and Navigation
+
+### 6.1 Next.js App Router
+
+* **File-Based Routing**: Intuitive folder structure in `/app` directory.
+* **Route Groups**: `(dashboard)` for layout organization without affecting URL structure.
+* **Nested Layouts**: Shared layouts for dashboard sections with sidebar navigation.
+* **Dynamic Routes**: For schema project management and shareable schema URLs.
+
+### 6.2 Navigation Structure
+
+* **Landing Page** → **Dashboard** → **New Schema** → **Results Viewer**
+* **Project History** → **Saved Schemas** → **Export Options**
+* **Authentication Flow** → **User Dashboard** → **Schema Management**
+
+## 7. Data Visualization & Schema Display
+
+### 7.1 Schema Visualization
+
+* **ERD Rendering**: Interactive entity-relationship diagrams with drag-and-drop support (@dnd-kit).
+* **Table Viewer**: TanStack Table for sortable, filterable schema table display.
+* **Code Highlighting**: Proper SQL syntax highlighting for raw schema output.
+* **Interactive Charts**: Recharts for schema complexity and relationship visualization.
+
+### 7.2 Export & Copy System
+
+* **Multi-format Export**: PostgreSQL, MySQL, Laravel migrations, Prisma schema formats.
+* **One-click Copy**: Clipboard API integration for instant code copying.
+* **Download System**: File generation and download for various schema formats.
+
+## 8. Performance Optimization
+
+### 8.1 Loading & Rendering
+
+* **Lazy Loading**: React.lazy() for heavy components (ERD viewer, complex charts).
+* **Suspense Boundaries**: Proper loading states during AI schema generation.
+* **Image Optimization**: Next.js Image component for optimized assets.
+* **Bundle Analysis**: Regular bundle size monitoring and optimization.
+
+### 8.2 AI Integration Performance
+
+* **Streaming Updates**: Real-time progress feedback during schema generation.
+* **Result Caching**: Client-side caching of generated schemas for quick re-access.
+* **Debounced Inputs**: Prevent excessive API calls during prompt editing.
+
+## 9. Testing and Quality Assurance
+
+### 9.1 Code Quality
+
+* **ESLint**: Next.js recommended configuration with TypeScript rules.
+* **TypeScript**: Strict mode for maximum type safety.
+* **Component Testing**: Jest + React Testing Library for component behavior.
+
+### 9.2 Testing Strategy
+
+* **Unit Tests**: Individual component functionality and utility functions.
+* **Integration Tests**: Schema generation workflow and user interactions.
+* **Visual Testing**: Component variations and responsive behavior.
+
+## 10. Required Package Additions
+
+Based on your current setup and project needs, consider adding these packages:
+
+### 10.1 Essential Additions
+
+```bash
+# AI/API Integration
+npm install @tanstack/react-query          # Server state management
+npm install axios                          # HTTP client
+
+# Code Highlighting & Display
+npm install @monaco-editor/react           # Code editor for SQL
+npm install prismjs react-syntax-highlighter # Syntax highlighting
+
+# Schema Visualization
+npm install reactflow                       # Advanced ERD diagrams
+npm install @visx/visx                     # Data visualization toolkit
+
+# Form Management
+npm install react-hook-form                # Advanced form handling
+npm install @hookform/resolvers            # Zod integration
+
+# Notifications & Feedback
+npm install react-hot-toast               # Alternative to Sonner
+npm install nprogress                     # Loading progress bars
+
+# Utilities
+npm install lodash-es                     # Utility functions
+npm install date-fns                     # Date manipulation
+npm install copy-to-clipboard            # Clipboard operations
+```
+
+### 10.2 Development Tools
+
+```bash
+# Testing
+npm install --save-dev @testing-library/react
+npm install --save-dev @testing-library/jest-dom
+npm install --save-dev jest-environment-jsdom
+
+# Type Definitions
+npm install --save-dev @types/lodash-es
+npm install --save-dev @types/prismjs
+```
+
+## 11. Component Examples
+
+### 11.1 Schema Result Viewer
+
+```typescript
+interface SchemaResultProps {
+  schema: GeneratedSchema
+  isLoading: boolean
+  onExport: (format: ExportFormat) => void
+}
+
+export function SchemaResult({ schema, isLoading, onExport }: SchemaResultProps) {
+  return (
+    <Tabs defaultValue="blueprint" className="w-full">
+      <TabsList>
+        <TabsTrigger value="blueprint">Blueprint</TabsTrigger>
+        <TabsTrigger value="sql">Raw SQL</TabsTrigger>
+        <TabsTrigger value="erd">ERD</TabsTrigger>
+        <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="blueprint">
+        <SchemaBlueprint schema={schema} />
+      </TabsContent>
+
+      <TabsContent value="sql">
+        <SQLViewer code={schema.sql} onCopy={() => copyToClipboard(schema.sql)} />
+      </TabsContent>
+
+      <TabsContent value="erd">
+        <ERDViewer entities={schema.entities} relationships={schema.relationships} />
+      </TabsContent>
+
+      <TabsContent value="suggestions">
+        <SuggestionsList suggestions={schema.suggestions} />
+      </TabsContent>
+    </Tabs>
+  )
+}
+```
+
+## 12. Conclusion & Development Philosophy
+
+Dataloom's frontend combines cutting-edge React patterns with practical developer tooling. Our architecture emphasizes type safety, component reusability, and seamless AI integration. The Tailwind + Shadcn/ui foundation provides consistency while allowing customization. Performance optimization ensures smooth schema generation and visualization even with complex database schemas.
+
+Key principles:
+- **Type Safety First**: Comprehensive TypeScript usage with runtime validation
+- **Component Composition**: Flexible, reusable components with clear interfaces
+- **Performance Conscious**: Lazy loading, code splitting, and optimized rendering
+- **Developer Experience**: Clear patterns, good tooling, and maintainable code
+- **AI Integration**: Seamless user experience during schema generation and results display
+
+This document should be updated as we add new features, integrate additional AI capabilities, or expand our export formats. The architecture supports scaling from MVP to enterprise-grade database schema tooling.
+
+Keep building amazing schemas! 🚀

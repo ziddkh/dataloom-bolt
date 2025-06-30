@@ -1,0 +1,176 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Update this rule if user requested changes to the project requirement, etc.
+# Project Requirements Document (PRD): Dataloom
+
+## 1. Project Overview
+
+Dataloom is a web-based developer tool that uses AI to generate, revamp, and analyze database schemas from plain-English prompts or raw SQL dumps. Backend developers, startups, and data engineers often spend hours hand-crafting table definitions, keys, and relationships. Dataloom tackles this by translating your natural-language descriptions or existing SQL into optimized schemas in seconds—complete with normalization advice, cost tips, and interactive diagrams.
+
+We’re building Dataloom to streamline the schema-design workflow, reduce manual toil, and enforce best practices automatically. In the MVP we aim to let authenticated users quickly input prompts, review a four-tab result interface (Blueprint, Raw SQL, ERD, Suggestions), export in multiple formats, and save every session in a lightweight project history. Success means a user can go from idea to production-ready DDL in under 60 seconds, while maintaining clear traceability of past work.
+
+## 2. In-Scope vs. Out-of-Scope
+
+### In-Scope (MVP)
+
+*   **User Authentication & Accounts**\
+    Email/password signup, verification link, token-based sessions.
+
+*   **Project Dashboard / History**\
+    List of past schema sessions with names/tags, date stamps, preview prompts.
+
+*   **Prompt Input Interface**\
+    → Natural-language textbox or SQL file upload\
+    → Toggles for output format: PostgreSQL, MySQL, Laravel migration, Prisma schema.
+
+*   **AI-Powered Backend Pipeline**\
+    Modular steps: prompt parsing → entity extraction → schema generation → normalization → cost estimation.\
+    Powered by OpenAI GPT-4 (abstracted for future model swaps).
+
+*   **Four-Tab Result Viewer**
+
+    1.  Visual Blueprint (table/field list & relations)
+    2.  Raw SQL (optimized DDL script)
+    3.  ERD (interactive entity-relationship diagram)
+    4.  Suggestions (normalization advice, cost tips, anti-pattern alerts)
+
+*   **Export Options**\
+    One-click copy/download: Laravel migrations, Prisma schema file, SQL dump.
+
+*   **Basic Security & Hosting**\
+    TLS encryption in transit, per-user data isolation, hosted on Hostinger VPS.
+
+### Out-of-Scope (Post-MVP / Later Phases)
+
+*   Billing system, subscription tiers, Stripe integration
+*   Schema versioning (diffs, rollbacks)
+*   Vendor-specific cost estimator (Supabase, Neon, PlanetScale)
+*   Query simulation & index optimization
+*   Live DB sync or real-time team collaboration
+*   IDE plugins, CLI tools, CI/CD integrations
+*   Full GDPR tooling, HIPAA compliance, encryption-at-rest
+*   Self-hosting or on-premises deployment
+
+## 3. User Flow
+
+When a new user lands on Dataloom, they see a minimalist login page prompting for email and password. After signing up, they receive a verification link; clicking it takes them into their personal Workspace dashboard. Here, they see a chronological list of past schema sessions—each tagged, named, and timestamped. A prominent “New Schema” button invites them to start fresh.
+
+Clicking “New Schema” brings up the Prompt Input screen. The user types a natural-language description of their data model or uploads a raw SQL dump. They choose their target platform via simple toggles (Postgres, MySQL, Laravel, Prisma) and hit “Generate.” A progress bar runs as the AI backend parses, normalizes, and cost-checks the input. When ready, the interface switches to a four-tab layout—Visual Blueprint, Raw SQL, ERD, and Suggestions—where the user can explore, tweak, and then export. Every session is automatically saved back to the dashboard for future revisits.
+
+## 4. Core Features
+
+*   **Authentication & User Profiles**\
+    Secure email/password signup, verification, token-based auth.
+
+*   **Project Dashboard / History**\
+    View, name/tag, and reopen past schema sessions.
+
+*   **Prompt Input UI**\
+    • Plain-text prompt or SQL upload\
+    • Platform toggles: PostgreSQL, MySQL, Laravel migrations, Prisma schema\
+    • “Generate” action with real-time submission feedback.
+
+*   **AI-Powered Schema Engine**\
+    Pipeline modules:
+
+    1.  Prompt parser (breaks text into entities/relationships)
+    2.  Entity extractor (identifies tables, fields)
+    3.  Schema generator (DDL creation)
+    4.  Normalizer (ensures best practices, suggests 1NF/2NF/3NF)
+    5.  Cost estimator (basic)
+
+*   **Four-Tab Results Viewer**
+
+    1.  Visual Blueprint (list view of tables/fields/relations)
+    2.  Raw SQL (downloadable DDL)
+    3.  ERD (graphical diagram, interactive)
+    4.  Suggestions (alerts on anti-patterns, cost-saving tips)
+
+*   **Export & Copy**\
+    One-click copy, or download as `.sql`, Laravel migration `.php`, or `.prisma` file.
+
+*   **Modular Architecture**\
+    Clear separation of frontend, backend, AI service abstraction for future model swaps.
+
+## 5. Tech Stack & Tools
+
+*   **Frontend**\
+    • Next.js 15.3.4 (React framework for server-side rendering)\
+    • React 19 + TypeScript (typed UI components)\
+    • Shadcn UI\
+    • v0 (AI-powered component builder)
+*   **Backend**\
+    • Node.js with Express or NestJS (API server)\
+    • Laravel 12 + Inertia 2 (optional admin panel, if needed)\
+    • PostgreSQL (primary database)\
+    • Hostinger VPS → scalable to AWS/GCP
+*   **AI & Models**\
+    • OpenAI GPT-4 / GPT-4o (core prompt-to-schema)\
+    • Abstraction layer for future self-hosted models (Claude, Mistral)
+*   **IDE & Tooling**\
+    • Bolt (scaffolding & best practices)\
+    • Cursor (AI-powered code suggestions)
+*   **Future Integrations** (post-MVP)\
+    • Stripe (billing)\
+    • GitHub Actions, CLI, IDE plugins
+
+## 6. Non-Functional Requirements
+
+*   **Performance**\
+    • Schema generation end-to-end within 60 seconds under normal load\
+    • Page load times under 2 seconds for dashboard and input screens
+*   **Security**\
+    • TLS enforced (HTTPS)\
+    • JWT or similar token-based auth\
+    • Per-user data isolation
+*   **Scalability**\
+    • Stateless API servers behind load balancer\
+    • Database connection pooling
+*   **Usability**\
+    • Responsive design for desktop to tablet screens\
+    • Clear progress indicators and inline tips
+*   **Maintainability**\
+    • Modular code structure (separate AI pipeline)\
+    • Well-documented APIs and component library
+*   **Compliance (MVP)**\
+    • Basic data-privacy hygiene (no sensitive PII stored)\
+    • Prepare hooks for future GDPR features
+
+## 7. Constraints & Assumptions
+
+*   **AI Dependency**\
+    • Real-time access to OpenAI GPT-4 API (rate limits apply)\
+    • English-only prompts optimized for MVP
+*   **Hosting**\
+    • Single-region VPS on Hostinger (no multi-region failover initially)
+*   **Storage**\
+    • Limited to prompt text and generated schema files (no large file uploads)
+*   **User Load**\
+    • Beta-scale (hundreds of users), not thousands
+*   **Assumptions**\
+    • Users have basic familiarity with database concepts\
+    • Output formats must match standard DDL expectations
+
+## 8. Known Issues & Potential Pitfalls
+
+*   **AI Misinterpretation**\
+    • Natural-language prompts can be vague.\
+    • Mitigation: Provide inline examples, validation of ambiguous terms.
+*   **SQL Parser Edge Cases**\
+    • Complex SQL dumps may break the parser.\
+    • Mitigation: Limit input size, fallback to raw SQL tab if parse fails, show clear error.
+*   **ERD Performance**\
+    • Rendering hundreds of tables might lag browsers.\
+    • Mitigation: Paginate large diagrams, virtualize nodes.
+*   **OpenAI Rate Limits & Costs**\
+    • High concurrency could trigger throttling or high API spend.\
+    • Mitigation: Queue requests, implement exponential back-off, monitor usage.
+*   **Data Consistency**\
+    • Race conditions if two generations are triggered simultaneously.\
+    • Mitigation: Disable “Generate” button until the previous job completes.
+
+This PRD provides a clear, unambiguous blueprint for Dataloom’s MVP. All downstream documents—Tech Stack, Frontend Guidelines, Backend Structure, Security Guidelines, and Implementation Plans—should reference these definitions and constraints to ensure consistency and a smooth development process.
+
